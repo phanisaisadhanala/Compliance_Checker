@@ -1,0 +1,84 @@
+{
+  "name": "phasorgrid",
+  "version": "1.1.0",
+  "description": "PhasorGrid — Relay Compliance Checker Desktop Application",
+  "main": "main.js",
+  "author": {
+    "name": "PhasorGrid RelayPro",
+    "email": "support@phasorgrid.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start":    "electron .",
+    "dev":      "electron . --dev",
+    "build":    "electron-builder --win --x64",
+    "build:all":"electron-builder --win --mac --linux",
+    "pack":     "electron-builder --dir"
+  },
+  "dependencies": {
+    "electron-log":     "^5.1.2",
+    "electron-updater": "^6.1.7"
+  },
+  "devDependencies": {
+    "electron":         "^29.1.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId":       "com.phasorgrid.app",
+    "productName": "PhasorGrid RelayPro(Intelligent Relay Compliance & Validation Platform)",
+    "copyright":   "Copyright © 2025 PhasorGrid",
+    "directories": {
+      "output":    "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "src/index.html",
+        "to":   "frontend/index.html"
+      },
+      {
+        "from": "src/app.py",
+        "to":   "backend/app.py"
+      },
+      {
+        "from": "python-embedded/",
+        "to":   "python/",
+        "filter": ["**/*"]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch":   ["x64"]
+        }
+      ],
+      "icon":          "assets/icon.ico",
+      "artifactName":  "${productName}-Setup-${version}.${ext}",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick":             false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation":       true,
+      "installerIcon":        "assets/icon.ico",
+      "uninstallerIcon":      "assets/icon.ico",
+      "installerHeaderIcon":  "assets/icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName":         "PhasorGrid",
+      "include":              "assets/installer.nsh"
+    },
+    "publish": {
+      "provider": "github",
+      "owner":    "phanisaisadhanala",
+      "repo":     "Compliance_Checker",
+      "releaseType": "release"
+    }
+  }
+}

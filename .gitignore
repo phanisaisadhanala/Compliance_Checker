@@ -1,0 +1,16 @@
+# Node
+node_modules/
+
+# Build output
+dist/
+win-unpacked/
+
+# Python embedded
+python-embedded/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

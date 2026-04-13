@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>'PhasorGrid — RelayPro (Intelligent Relay Compliance & Validation Platform)'</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #003580;
+      --primary-d: #002060;
+      --accent: #0055cc;
+      --accent2: #1a73e8;
+      --success: #146c2e;
+      --warning: #a85000;
+      --danger: #b91c1c;
+      --ok-bg: #e6f4ea;
+      --ok-bdr: #34a853;
+      --err-bg: #fce8e6;
+      --err-bdr: #c5221f;
+      --warn-bg: #fef7e0;
+      --warn-bdr: #f9ab00;
+      --bg: #f0f3f9;
+      --surface: #fff;
+      --border: #dadce0;
+      --text: #1a1a2e;
+      --muted: #5f6368;
+      --headerclr: #596172;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Sora', system-ui, sans-serif; font-size: 13.5px; min-height: 100vh; }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--headerclr);
+      padding: 0 2rem; height: 100px;
+      display: flex; justify-content: center; align-items: center;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,53,128,.18);
+    }
+    .logo { display: flex; flex-direction: column; align-items: center; gap: .25rem; text-decoration: none; }
+    .logo img { height: 75px; width: auto; object-fit: contain; }
+    .logo-sub { font-size: .7rem; color: #f0f0f0; letter-spacing: .12em; text-transform: uppercase; margin-top: 1px; }
+
+    /* ── MAIN ── */
+    main {
+      max-width: 1200px; margin: 1.5rem auto 3rem;
+      padding: 2rem 1.5rem 4rem;
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: 0 0 0 4px rgba(0,53,128,.06), var(--shadow);
+    }
+    .page-header { text-align: center; margin-bottom: 2rem; }
+    .page-title { font-size: 1.65rem; font-weight: 700; color: var(--primary); margin-bottom: .4rem; letter-spacing: -.02em; }
+    .page-subtitle { color: var(--muted); font-size: .88rem; max-width: 640px; margin: 0 auto; }
+    .section-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--primary); margin-bottom: .7rem; padding-left: 2px; }
+
+    /* ── MODE TOGGLE ── */
+    .mode-toggle {
+      display: flex; width: fit-content; margin: 0 auto 2rem;
+      border: 1.5px solid var(--primary); border-radius: 8px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.1);
+    }
+    .mode-btn {
+      padding: .5rem 1.6rem; border: none; background: transparent;
+      color: var(--primary); font-family: 'Sora', sans-serif; font-size: .83rem; font-weight: 600;
+      cursor: pointer; transition: background .15s, color .15s; white-space: nowrap;
+    }
+    .mode-btn.active { background: var(--primary); color: #fff; }
+    .mode-btn:not(.active):hover { background: #e8f0fe; }
+    .mode-divider { width: 1px; background: var(--primary); opacity: .4; }
+
+    /* ── UPLOAD CARDS ── */
+    .calc-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1rem; }
+    .upload-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.8rem; }
+    @media(max-width:900px) { .upload-grid { grid-template-columns: repeat(2,1fr); } }
+    @media(max-width:640px) { .upload-grid { grid-template-columns: 1fr; } }
+
+    .calc-card {
+      border: 2px solid var(--primary); background: #f0f6ff;
+      border-radius: var(--radius); padding: 1.1rem 1.2rem 1rem;
+      box-shadow: var(--shadow); transition: border-color .18s, box-shadow .18s;
+    }
+    .calc-card:hover { border-color: var(--primary-d); box-shadow: 0 2px 14px rgba(0,53,128,.15); }
+    .upload-card {
+      border: 2px solid #1a73e8; background: #f0f6ff;
+      border-radius: var(--radius); padding: 1.1rem 1.2rem 1rem;
+      box-shadow: var(--shadow); transition: border-color .18s, box-shadow .18s;
+    }
+    .upload-card:hover { border-color: var(--accent2); box-shadow: 0 2px 14px rgba(26,115,232,.13); }
+
+    .card-header { display: flex; align-items: flex-start; gap: .6rem; margin-bottom: .7rem; }
+    .card-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .95rem; flex-shrink: 0; }
+    .ci-blue   { background: #e8f0fe; }
+    .ci-purple { background: #f3e8ff; }
+    .ci-green  { background: #e6f4ea; }
+    .ci-teal   { background: #e0f2f1; }
+    .card-title { font-weight: 600; font-size: .87rem; color: var(--text); }
+    .card-desc  { font-size: .72rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── DROPZONE ── */
+    .dropzone {
+      border: 1.5px dashed var(--border); border-radius: 7px;
+      padding: .75rem .6rem; cursor: pointer;
+      transition: border-color .18s, background .18s;
+      position: relative; text-align: center;
+    }
+    .dropzone:hover, .dropzone.drag-over { border-color: var(--accent2); background: #e8f0fe; }
+    .dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .dz-label { font-size: .76rem; color: var(--muted); pointer-events: none; }
+    .dz-label span { color: var(--accent); font-weight: 600; }
+
+    /* ── FILE PILLS ── */
+    .file-list { max-height: 120px; overflow-y: auto; margin-top: .5rem; display: flex; flex-direction: column; gap: .3rem; }
+    .file-pill { display: flex; align-items: center; gap: .45rem; background: #f1f3f4; border: 1px solid #dadce0; border-radius: 5px; padding: .28rem .55rem; font-size: .73rem; min-width: 0; }
+    .file-pill .fname { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+    .file-pill .rm { cursor: pointer; color: var(--muted); font-size: .95rem; line-height: 1; transition: color .15s; flex-shrink: 0; }
+    .file-pill .rm:hover { color: var(--danger); }
+
+    /* ── BUTTONS ── */
+    .action-bar { display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 1.5rem 0 2rem; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; gap: .5rem; border: none; border-radius: 7px; cursor: pointer; font-size: .92rem; font-weight: 600; font-family: 'Sora', sans-serif; padding: .7rem 1.8rem; transition: filter .15s, transform .1s, box-shadow .15s; }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(0,53,128,.3); }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-d); box-shadow: 0 4px 16px rgba(0,53,128,.4); }
+    .btn-ghost { background: #34a853; color: #fff; border: 1.5px solid #2d9147; }
+    .btn-ghost:hover:not(:disabled) { filter: brightness(1.07); }
+    .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TOAST ── */
+    .toast { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%) translateY(-20px); background: var(--err-bg); border: 1.5px solid var(--err-bdr); color: var(--danger); border-radius: 10px; padding: .85rem 1.4rem; font-size: .87rem; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.14); z-index: 9999; display: none; align-items: center; gap: .7rem; min-width: 320px; max-width: 560px; animation: slideDown .25s ease; }
+    .toast.show { display: flex; }
+    @keyframes slideDown { from { opacity: 0; transform: translateX(-50%) translateY(-30px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    .toast-close { margin-left: auto; cursor: pointer; font-size: 1.1rem; opacity: .7; transition: opacity .15s; flex-shrink: 0; }
+    .toast-close:hover { opacity: 1; }
+
+    /* ── RESULTS ── */
+    #results { display: none; animation: fadeUp .3s ease; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .result-banner { border-radius: var(--radius); padding: 1rem 1.3rem; display: flex; align-items: center; gap: .8rem; margin-bottom: 1.5rem; font-weight: 600; font-size: .95rem; }
+    .banner-pass { background: var(--ok-bg); border: 1px solid var(--ok-bdr); color: var(--success); }
+    .banner-fail { background: var(--err-bg); border: 1px solid var(--err-bdr); color: var(--danger); }
+
+    /* ── CHECK CARDS ── */
+    .checks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .check-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem 1.2rem; box-shadow: var(--shadow); }
+    .check-card.pass { border-left: 4px solid var(--ok-bdr); }
+    .check-card.fail { border-left: 4px solid var(--err-bdr); }
+    .check-card.skip { border-left: 4px solid #9aa0a6; }
+    .check-title { font-weight: 700; font-size: .9rem; color: var(--text); display: flex; align-items: center; gap: .5rem; margin-bottom: .7rem; }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .dot-pass { background: var(--ok-bdr); }
+    .dot-fail { background: var(--err-bdr); }
+    .dot-skip { background: #9aa0a6; }
+
+    /* ── TABLE ── */
+    .kv-2col { width: 100%; border-collapse: collapse; font-size: .76rem; margin-bottom: .4rem; }
+    .kv-2col thead th { background: #f1f3f4; color: var(--muted); font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; padding: .38rem .5rem; text-align: center; border: 1px solid #e0e0e0; }
+    .kv-2col thead th:first-child { text-align: left; }
+    .kv-2col tbody tr { border-bottom: 1px solid #f1f3f4; }
+    .kv-2col tbody tr:last-child { border-bottom: none; }
+    .kv-2col tbody td { padding: .34rem .5rem; vertical-align: middle; }
+    .kv-2col td:first-child { color: var(--muted); width: 38%; font-size: .73rem; }
+    .kv-2col td:nth-child(2), .kv-2col td:nth-child(3) { text-align: center; font-family: 'JetBrains Mono', monospace; font-size: .77rem; font-weight: 600; }
+    .val-ok  { color: var(--success) !important; font-weight: 700; }
+    .val-bad { color: var(--danger)  !important; font-weight: 700; }
+    .val-neu { color: var(--text); }
+    .val-dim { color: var(--muted); font-weight: 400; }
+    .mono    { font-family: 'JetBrains Mono', monospace; }
+
+    /* ── INLINE BOXES ── */
+    .inline-err  { margin-top: .6rem; background: var(--err-bg);  border: 1px solid var(--err-bdr);  border-radius: 6px; padding: .5rem .7rem; font-size: .75rem; color: var(--danger);  line-height: 1.5; }
+    .inline-info { margin-top: .6rem; background: #e8f0fe; border: 1px solid #aecbfa; border-radius: 6px; padding: .5rem .7rem; font-size: .75rem; color: var(--primary); line-height: 1.5; }
+
+    /* ── PRC BOX ── */
+    .prc-box { margin-top: .7rem; border-radius: 6px; padding: .6rem .85rem; font-size: .76rem; line-height: 1.65; }
+    .prc-box.prc-pass { background: var(--ok-bg); border: 1px solid var(--ok-bdr); color: var(--success); }
+    .prc-box.prc-fail { background: var(--err-bg); border: 1px solid var(--err-bdr); color: var(--danger); }
+    .prc-box .prc-line { display: block; padding: .1rem 0; }
+    .prc-box .prc-line.prc-na { color: var(--muted); font-size: .72rem; }
+
+    /* ── PORT BADGES ── */
+    .port-badges { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .5rem; }
+    .port-badge { font-size: .72rem; font-weight: 700; padding: .22rem .65rem; border-radius: 4px; font-family: 'JetBrains Mono', monospace; }
+    .pb-pass { background: var(--ok-bg); color: var(--success); border: 1px solid var(--ok-bdr); }
+    .pb-fail { background: var(--err-bg); color: var(--danger);  border: 1px solid var(--err-bdr); }
+
+    /* ── ERROR TABLE ── */
+    .error-section { background: var(--surface); border: 1px solid var(--err-bdr); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 1.5rem; }
+    .error-section-head { background: var(--err-bg); padding: .8rem 1.2rem; border-bottom: 1px solid var(--err-bdr); }
+    .error-section-head h3 { font-size: .9rem; font-weight: 700; color: var(--danger); }
+    .errors-table { width: 100%; border-collapse: collapse; font-size: .79rem; }
+    .errors-table thead tr { background: #fff5f5; }
+    .errors-table th { text-align: left; padding: .55rem 1rem; font-weight: 700; color: var(--danger); border-bottom: 1px solid var(--err-bdr); font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; }
+    .errors-table td { padding: .6rem 1rem; border-bottom: 1px solid #fce8e6; color: var(--text); vertical-align: top; }
+    .errors-table tbody tr:last-child td { border-bottom: none; }
+    .errors-table tbody tr:hover { background: #fff5f5; }
+    .err-num { font-weight: 700; color: var(--danger); white-space: nowrap; font-family: 'JetBrains Mono', monospace; }
+    .err-cat { font-weight: 600; white-space: nowrap; }
+    .approver-input {
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .28rem .5rem;
+      font-size: .73rem;
+      width: 150px;
+      font-family: 'Sora', sans-serif;
+      color: var(--text);
+      background: #fafafa;
+      transition: border-color .15s, background .15s;
+    }
+    .approver-input:focus { outline: none; border-color: var(--accent2); background: #fff; }
+    .approver-input:not(:placeholder-shown) { background: #e8f0fe; border-color: var(--accent2); font-weight: 600; }
+
+    /* ── DOWNLOAD SECTION ── */
+    .download-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.3rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; box-shadow: var(--shadow); flex-wrap: wrap; gap: .5rem; }
+    .download-section p { font-size: .84rem; color: var(--muted); }
+    .download-btns { display: flex; gap: .6rem; flex-wrap: wrap; }
+    .btn-dl { border: none; border-radius: 6px; cursor: pointer; font-family: 'Sora', sans-serif; font-size: .78rem; font-weight: 600; padding: .42rem .9rem; display: inline-flex; align-items: center; gap: .35rem; transition: filter .15s; }
+    .btn-dl:hover { filter: brightness(1.1); }
+    .btn-dl.loading { opacity: .65; cursor: wait; }
+    .btn-dl-pdf  { background: #c5221f; color: #fff; }
+    .btn-dl-pdf2 { background: #5b21b6; color: #fff; }
+
+    /* ── BATCH SUMMARY ── */
+    .batch-summary { display: flex; gap: .75rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .batch-stat { flex: 1; min-width: 110px; border-radius: var(--radius); padding: .7rem 1rem; text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border); background: var(--surface); }
+    .batch-stat .stat-num { font-size: 1.6rem; font-weight: 700; line-height: 1; display: block; }
+    .batch-stat .stat-lbl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: .2rem; display: block; }
+    .bs-total .stat-num { color: var(--primary); } .bs-total { border-color: #aecbfa; }
+    .bs-pass  .stat-num { color: var(--success); } .bs-pass  { border-color: var(--ok-bdr); background: var(--ok-bg); }
+    .bs-fail  .stat-num { color: var(--danger);  } .bs-fail  { border-color: var(--err-bdr); background: var(--err-bg); }
+
+    /* ── TABS ── */
+    .batch-tabs { display: flex; gap: .35rem; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 2px solid var(--border); }
+    .batch-tab { padding: .38rem .9rem; border-radius: 6px 6px 0 0; border: 1px solid var(--border); border-bottom: none; background: #f1f3f4; color: var(--muted); font-size: .76rem; font-weight: 600; cursor: pointer; font-family: 'Sora', sans-serif; transition: background .15s, color .15s; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .batch-tab.active { background: var(--surface); color: var(--primary); border-color: var(--primary); border-bottom-color: var(--surface); margin-bottom: -2px; position: relative; z-index: 1; }
+    .batch-tab.tab-pass { border-top: 3px solid var(--ok-bdr); }
+    .batch-tab.tab-fail { border-top: 3px solid var(--err-bdr); }
+    .batch-panel { display: none; }
+    .batch-panel.active { display: block; }
+
+    /* ── GROUP CARD ── */
+    .group-card { margin-bottom: 2rem; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .group-header { padding: .75rem 1.2rem; display: flex; align-items: center; justify-content: space-between; }
+    .group-badges { display: flex; gap: .4rem; font-size: .74rem; font-weight: 600; }
+    .gbadge { border-radius: 4px; padding: .2rem .6rem; border: 1px solid; }
+    .gbadge-total { background: #fff; border-color: var(--border); color: var(--text); }
+    .gbadge-pass  { background: var(--ok-bg); border-color: var(--ok-bdr); color: var(--success); }
+    .gbadge-fail  { background: var(--err-bg); border-color: var(--err-bdr); color: var(--danger); }
+    .group-body { padding: 1rem 1.2rem; }
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header>
+    <a class="logo" href="#">
+      <img src="../assets/logo-2x.png" alt="PhasorGrid"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
+        style="height:75px;width:auto;object-fit:contain;">
+      <svg style="display:none" width="46" height="46" viewBox="0 0 46 46" fill="none">
+        <rect width="46" height="46" rx="11" fill="#003580"/>
+        <line x1="12" y1="34" x2="34" y2="13" stroke="#7EC8F7" stroke-width="2.6" stroke-linecap="round"/>
+        <polygon points="34,13 28,14.5 32.5,19" fill="#7EC8F7"/>
+        <path d="M8 28 Q12 24 16 27 Q20 30 23 27 Q26 24 30 27 Q34 30 38 28" stroke="#90EEC0" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      </svg>
+      <div class="logo-sub">Relay Intelligence Platform</div>
+    </a>
+  </header>
+
+  <!-- ── TOAST ── -->
+  <div class="toast" id="toast">
+    <span id="toast-icon">⚠️</span>
+    <span id="toast-msg"></span>
+    <span class="toast-close" onclick="closeToast()">✕</span>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <main>
+    <div class="page-header">
+      <h1 class="page-title">⚡ Relay Compliance Checker</h1>
+      <p class="page-subtitle">Upload the required files, then click <strong>Run Checks</strong> to validate CTR/PTR, port settings, conductor ratings, and PRC safe load compliance.</p>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btnSingle" onclick="setMode('single')">🔍 Single RDB</button>
+      <div class="mode-divider"></div>
+      <button class="mode-btn" id="btnMulti" onclick="setMode('multi')">🗂️ Multi-File</button>
+    </div>
+
+    <!-- ══ SINGLE MODE UPLOADS ══ -->
+    <div id="singleSection">
+      <div class="section-label">📊 Line Protection Calculation Sheet (Required)</div>
+      <div class="calc-grid">
+        <div class="calc-card">
+          <div class="card-header">
+            <div class="card-icon ci-blue">📊</div>
+            <div>
+              <div class="card-title">Calculation Sheet *</div>
+              <div class="card-desc">Source of CTR, PTR, conductor rating (.xlsx / .xlsm)</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-calc" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,'calc',this)">
+            <input type="file" id="file-calc" accept=".xlsx,.xlsm" onchange="fileChange('calc',this)" />
+            <div class="dz-label">Drop file here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-calc"></div>
+        </div>
+      </div>
+
+      <div class="section-label">📁 Supporting Files</div>
+      <div class="upload-grid">
+        <div class="upload-card">
+          <div class="card-header">
+            <div class="card-icon ci-purple">🔌</div>
+            <div>
+              <div class="card-title">RDB Settings File</div>
+              <div class="card-desc">SEL relay .rdb file — CTR/PTR &amp; port checks</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-rdb" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,'rdb',this)">
+            <input type="file" id="file-rdb" accept=".rdb,.txt" onchange="fileChange('rdb',this)" />
+            <div class="dz-label">Drop .rdb file here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-rdb"></div>
+        </div>
+        <div class="upload-card">
+          <div class="card-header">
+            <div class="card-icon ci-green">📋</div>
+            <div>
+              <div class="card-title">FR Workbook</div>
+              <div class="card-desc">Facility Rating Workbook (.xlsx)</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-fr" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,'fr',this)">
+            <input type="file" id="file-fr" accept=".xlsx,.xlsm" onchange="fileChange('fr',this)" />
+            <div class="dz-label">Drop file here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-fr"></div>
+        </div>
+        <div class="upload-card">
+          <div class="card-header">
+            <div class="card-icon ci-teal">⚙️</div>
+            <div>
+              <div class="card-title">SEL Formula Output</div>
+              <div class="card-desc">Text file containing Safe Load value</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-sel" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDrop(event,'sel',this)">
+            <input type="file" id="file-sel" accept=".txt" onchange="fileChange('sel',this)" />
+            <div class="dz-label">Drop .txt file here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-sel"></div>
+        </div>
+      </div>
+    </div><!-- end singleSection -->
+
+    <!-- ══ MULTI-FILE MODE UPLOADS ══ -->
+    <div id="multiSection" style="display:none">
+      <div class="section-label">🗂️ Multi-File Upload — Files are automatically grouped by line number &amp; station name</div>
+
+      <!-- Calc Sheets (multiple) -->
+      <div class="calc-grid">
+        <div class="calc-card">
+          <div class="card-header">
+            <div class="card-icon ci-blue">📊</div>
+            <div>
+              <div class="card-title">Calculation Sheets * (multiple)</div>
+              <div class="card-desc">One per line/group — defines grouping. .xlsm / .xlsx</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-mcalc" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDropMulti(event,'mcalc',this)">
+            <input type="file" id="file-mcalc" accept=".xlsx,.xlsm" multiple onchange="addMultiFiles('mcalc',this)" />
+            <div class="dz-label">Drop .xlsm / .xlsx files here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-mcalc"></div>
+        </div>
+      </div>
+
+      <div class="upload-grid">
+        <div class="upload-card">
+          <div class="card-header">
+            <div class="card-icon ci-purple">🔌</div>
+            <div>
+              <div class="card-title">RDB Files (multiple)</div>
+              <div class="card-desc">One or more .rdb relay settings files</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-mrdb" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDropMulti(event,'mrdb',this)">
+            <input type="file" id="file-mrdb" accept=".rdb,.txt" multiple onchange="addMultiFiles('mrdb',this)" />
+            <div class="dz-label">Drop .rdb files here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-mrdb"></div>
+        </div>
+        <div class="upload-card">
+          <div class="card-header">
+            <div class="card-icon ci-green">📋</div>
+            <div>
+              <div class="card-title">FR Workbooks (multiple)</div>
+              <div class="card-desc">One or more Facility Rating workbooks</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-mfr" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDropMulti(event,'mfr',this)">
+            <input type="file" id="file-mfr" accept=".xlsx,.xlsm" multiple onchange="addMultiFiles('mfr',this)" />
+            <div class="dz-label">Drop FR .xlsx files here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-mfr"></div>
+        </div>
+        <div class="upload-card">
+          <div class="card-header">
+            <div class="card-icon ci-teal">⚙️</div>
+            <div>
+              <div class="card-title">SEL Outputs (multiple)</div>
+              <div class="card-desc">SEL .txt formula output files (Safe Load)</div>
+            </div>
+          </div>
+          <div class="dropzone" id="dz-msel" ondragover="dzDrag(event,this)" ondragleave="dzLeave(this)" ondrop="dzDropMulti(event,'msel',this)">
+            <input type="file" id="file-msel" accept=".txt" multiple onchange="addMultiFiles('msel',this)" />
+            <div class="dz-label">Drop SEL .txt files here or <span>browse</span></div>
+          </div>
+          <div class="file-list" id="fl-msel"></div>
+        </div>
+      </div>
+    </div><!-- end multiSection -->
+
+    <!-- ── ACTION BAR ── -->
+    <div class="action-bar">
+      <button class="btn btn-primary" id="runBtn" onclick="runChecks()">
+        <div class="spinner" id="spinner"></div>
+        <span id="runLabel">▶ Run Checks</span>
+      </button>
+      <button class="btn btn-ghost" onclick="resetAll()">↺ Reset</button>
+    </div>
+
+    <!-- ══ SINGLE RESULTS ══ -->
+    <div id="results" style="display:none">
+      <div id="summaryBanner" class="result-banner"></div>
+      <div class="download-section">
+        <p>Download compliance report</p>
+        <div class="download-btns">
+          <button class="btn-dl btn-dl-pdf" id="pdfBtnSingle" onclick="downloadSinglePDF()">⬇ Download PDF</button>
+        </div>
+      </div>
+      <div class="checks-grid" id="checksGrid"></div>
+      <div id="errorTableSection" style="display:none">
+        <div class="error-section">
+          <div class="error-section-head"><h3 id="errTableTitle">⚠️ Issues Found</h3></div>
+          <table class="errors-table">
+            <thead><tr><th>#</th><th>Check Category</th><th>Issue Description</th><th>Approver</th></tr></thead>
+            <tbody id="errorsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MULTI RESULTS ══ -->
+    <div id="multiResults" style="display:none">
+      <div id="multiSummaryBar" class="batch-summary"></div>
+      <div id="multiResultBanner" class="result-banner" style="margin-bottom:1rem"></div>
+      <div class="download-section">
+        <p>Download multi-file compliance report</p>
+        <div class="download-btns">
+          <button class="btn-dl btn-dl-pdf"  id="pdfBtnMultiAll"      onclick="downloadMultiPDFAll()">⬇ All PDFs</button>
+          <button class="btn-dl btn-dl-pdf2" id="pdfBtnMultiCombined" onclick="downloadMultiPDFCombined()">⬇ Combined PDF</button>
+        </div>
+      </div>
+      <div id="multiGroupsContainer"></div>
+    </div>
+
+  </main>
+
+  <script>
+    // ═══════════════════════════════════════════════════════
+    // STATE
+    // ═══════════════════════════════════════════════════════
+    const files      = { calc: [], rdb: [], fr: [], sel: [] };
+    const multiFiles = { mcalc: [], mrdb: [], mfr: [], msel: [] };
+    let lastData     = null;
+    let currentMode  = 'single';
+
+    // ═══════════════════════════════════════════════════════
+    // MODE TOGGLE
+    // ═══════════════════════════════════════════════════════
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnSingle').classList.toggle('active', mode === 'single');
+      document.getElementById('btnMulti').classList.toggle('active',  mode === 'multi');
+      document.getElementById('singleSection').style.display = mode === 'single' ? '' : 'none';
+      document.getElementById('multiSection').style.display  = mode === 'multi'  ? '' : 'none';
+      document.getElementById('results').style.display      = 'none';
+      document.getElementById('multiResults').style.display = 'none';
+      lastData = null;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // DROPZONE
+    // ═══════════════════════════════════════════════════════
+    function dzDrag(e, el)      { e.preventDefault(); el.classList.add('drag-over'); }
+    function dzLeave(el)        { el.classList.remove('drag-over'); }
+    function dzDrop(e, key, el) { e.preventDefault(); dzLeave(el); addFiles(key, [...e.dataTransfer.files]); }
+    function dzDropMulti(e, key, el) { e.preventDefault(); dzLeave(el); addMultiFiles(key, null, [...e.dataTransfer.files]); }
+    function fileChange(key, input) { addFiles(key, [...input.files]); input.value = ''; }
+
+    function addFiles(key, f) {
+      files[key] = f.slice(0, 1);
+      renderFileList(key);
+    }
+    function removeFile(key, i) { files[key].splice(i, 1); renderFileList(key); }
+    function renderFileList(key) {
+      const el = document.getElementById('fl-' + key);
+      if (!el) return;
+      el.innerHTML = files[key].map((f, i) =>
+        `<div class="file-pill"><span>📄</span>
+         <span class="fname" title="${f.name}">${f.name}</span>
+         <span class="rm" onclick="removeFile('${key}',${i})">×</span></div>`
+      ).join('');
+    }
+
+    function addMultiFiles(key, input, extraFiles) {
+      const incoming = input ? [...input.files] : (extraFiles || []);
+      if (input) input.value = '';
+      multiFiles[key] = [...multiFiles[key], ...incoming];
+      renderMultiFileList(key);
+    }
+    function removeMultiFile(key, idx) { multiFiles[key].splice(idx, 1); renderMultiFileList(key); }
+    function renderMultiFileList(key) {
+      const el = document.getElementById('fl-' + key);
+      if (!el) return;
+      el.innerHTML = multiFiles[key].map((f, i) =>
+        `<div class="file-pill"><span>📄</span>
+         <span class="fname" title="${f.name}">${f.name}</span>
+         <span class="rm" onclick="removeMultiFile('${key}',${i})">×</span></div>`
+      ).join('');
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // TOAST
+    // ═══════════════════════════════════════════════════════
+    let toastTimer = null;
+    function showToast(msg, icon = '⚠️') {
+      clearTimeout(toastTimer);
+      document.getElementById('toast-msg').textContent  = msg;
+      document.getElementById('toast-icon').textContent = icon;
+      document.getElementById('toast').classList.add('show');
+      toastTimer = setTimeout(closeToast, 5500);
+    }
+    function closeToast() { document.getElementById('toast').classList.remove('show'); }
+
+    // ═══════════════════════════════════════════════════════
+    // RUN DISPATCHER
+    // ═══════════════════════════════════════════════════════
+    async function runChecks() {
+      if (currentMode === 'multi') { await runMultiChecks(); return; }
+
+      // Single mode validation
+      const hasCalc = !!files.calc[0];
+      const hasSupp = !!(files.rdb[0] || files.fr[0] || files.sel[0]);
+      if (!hasCalc && !hasSupp) { showToast('Please upload the Calc Sheet and at least one supporting file.'); return; }
+      if (!hasCalc)             { showToast('Please upload the Calc Sheet before running checks.'); return; }
+      if (!hasSupp)             { showToast('Please upload at least one supporting file (RDB, FR Workbook, or SEL).'); return; }
+
+      setBtnLoading(true, 'Running…');
+      document.getElementById('results').style.display = 'none';
+
+      const fd = new FormData();
+      if (files.calc[0]) fd.append('calc_sheet',  files.calc[0]);
+      if (files.rdb[0])  fd.append('rdb_file',    files.rdb[0]);
+      if (files.fr[0])   fd.append('fr_workbook', files.fr[0]);
+      if (files.sel[0])  fd.append('sel_file',    files.sel[0]);
+
+      try {
+        const res = await fetch('http://localhost:5051/api/check', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        lastData = await res.json();
+        if (lastData._no_table) showToast(lastData.errors[0] || 'Upload required files first.');
+        else renderSingleResults(lastData);
+      } catch (err) {
+        showToast('Backend not reachable: ' + err.message + '. Start the Flask server (python app.py).', '🔴');
+      } finally { setBtnLoading(false); }
+    }
+
+    async function runMultiChecks() {
+      if (!multiFiles.mcalc.length) { showToast('Please upload at least one Calc Sheet.'); return; }
+      if (!multiFiles.mrdb.length && !multiFiles.mfr.length && !multiFiles.msel.length) {
+        showToast('Please upload at least one supporting file (RDB, FR, or SEL).'); return;
+      }
+
+      setBtnLoading(true, `Processing ${multiFiles.mcalc.length} group(s)…`);
+      document.getElementById('results').style.display      = 'none';
+      document.getElementById('multiResults').style.display = 'none';
+
+      const fd = new FormData();
+      multiFiles.mcalc.forEach(f => fd.append('calc_files[]', f));
+      multiFiles.mrdb.forEach(f  => fd.append('rdb_files[]',  f));
+      multiFiles.mfr.forEach(f   => fd.append('fr_files[]',   f));
+      multiFiles.msel.forEach(f  => fd.append('sel_files[]',  f));
+
+      try {
+        const res = await fetch('http://localhost:5051/api/check_multi', { method: 'POST', body: fd });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        lastData = await res.json();
+        renderMultiResults(lastData);
+      } catch (err) {
+        showToast('Backend not reachable: ' + err.message + '. Start the Flask server (python app.py).', '🔴');
+      } finally { setBtnLoading(false); }
+    }
+
+    function setBtnLoading(on, label = '▶ Run Checks') {
+      const btn  = document.getElementById('runBtn');
+      const spin = document.getElementById('spinner');
+      const lbl  = document.getElementById('runLabel');
+      btn.disabled      = on;
+      spin.style.display = on ? 'block' : 'none';
+      lbl.textContent   = on ? label : '▶ Run Checks';
+    }
+
+    function resetAll() {
+      Object.keys(files).forEach(k => { files[k] = []; renderFileList(k); });
+      ['calc','rdb','fr','sel'].forEach(k => { const i = document.getElementById('file-'+k); if(i) i.value=''; });
+      Object.keys(multiFiles).forEach(k => { multiFiles[k] = []; renderMultiFileList(k); });
+      document.getElementById('results').style.display      = 'none';
+      document.getElementById('multiResults').style.display = 'none';
+      lastData = null;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // RENDER HELPERS
+    // ═══════════════════════════════════════════════════════
+    function esc(str) {
+      return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function makeCard(status, title, innerHtml) {
+      const dc = { pass:'dot-pass', fail:'dot-fail', skip:'dot-skip' }[status] || 'dot-skip';
+      const d  = document.createElement('div');
+      d.className = `check-card ${status}`;
+      d.innerHTML = `<div class="check-title"><div class="status-dot ${dc}"></div>${esc(title)}</div>${innerHtml}`;
+      return d;
+    }
+    function tRow(label, rdbVal, calcVal, ok) {
+      const cls  = ok === true ? 'val-ok' : ok === false ? 'val-bad' : 'val-neu';
+      const rStr = rdbVal  != null ? esc(String(rdbVal))  : '<span class="val-dim">—</span>';
+      const cStr = calcVal != null ? esc(String(calcVal)) : '<span class="val-dim">—</span>';
+      return `<tr><td>${esc(label)}</td><td class="${cls}">${rStr}</td><td class="${cls}">${cStr}</td></tr>`;
+    }
+    function getCategory(msg) {
+      if (/CTRW×5|CTRW.5/i.test(msg))     return 'CTRW×5';
+      if (/CTRX×5|CTRX.5/i.test(msg))     return 'CTRX×5';
+      if (/CTRW|CTR W/i.test(msg))         return 'CTRW';
+      if (/CTRX|CTR X/i.test(msg))         return 'CTRX';
+      if (/PTRZ/i.test(msg))               return 'PTRZ';
+      if (/PTR|PTRY/i.test(msg))           return 'PTRY';
+      if (/Port|EPORT|TIMEOUT/i.test(msg)) return 'Port Settings';
+      if (/Conductor/i.test(msg))          return 'Conductor Rating';
+      if (/PRC|Safe Load/i.test(msg))      return 'PRC / Safe Load';
+      if (/Calc Sheet/i.test(msg))         return 'Calc Sheet';
+      if (/RDB/i.test(msg))               return 'RDB File';
+      return 'General';
+    }
+
+    // ── Build 4 check cards into any grid element ─────────────────────────────
+    function buildChecksInto(data, gridEl) {
+      const r = data.results || {};
+      gridEl.innerHTML = '';
+
+      // 1. CTR / PTR
+      const cp = r.ctr_ptr_check;
+      if (cp !== undefined) {
+        const skip = cp.pass === null, pass = cp.pass === true;
+        let html = '';
+        if (!skip) {
+          html = `<table class="kv-2col">
+            <thead><tr><th>Parameter</th><th>RDB Value</th><th>Calc Sheet</th></tr></thead>
+            <tbody>
+              ${tRow('CTRW',      cp.rdb_ctrw, cp.calc_ctrw, cp.ctrw_ok)}
+              ${tRow('CTRX',      cp.rdb_ctrx, cp.calc_ctrx, cp.ctrx_ok)}
+              ${tRow('PTRY',      cp.rdb_ptry, cp.calc_ptry, cp.ptry_ok)}
+              ${tRow('PTRZ',      cp.rdb_ptrz, cp.calc_ptrz, cp.ptrz_ok)}
+              ${tRow('CTRW × 5', cp.ctrw_x5,  cp.e22,       cp.ctrw_x5_ok)}
+              ${tRow('CTRX × 5', cp.ctrx_x5,  cp.e23,       cp.ctrx_x5_ok)}
+            </tbody></table>`;
+          if (cp.ptry_ok === false && cp.ptry_warning)
+            html += `<div class="inline-err">❌ PTRY Mismatch: RDB=<strong>${cp.rdb_ptry}</strong>. ${esc(cp.ptry_warning)}</div>`;
+          if (cp.ptrz_ok === false && cp.ptrz_warning)
+            html += `<div class="inline-err">❌ PTRZ Mismatch: RDB=<strong>${cp.rdb_ptrz}</strong>. ${esc(cp.ptrz_warning)}</div>`;
+          if (cp.ctrw_ok === false)
+            html += `<div class="inline-err">❌ CTRW Mismatch: RDB=<strong>${cp.rdb_ctrw}</strong>, Calc=<strong>${cp.calc_ctrw}</strong></div>`;
+          if (cp.ctrx_ok === false)
+            html += `<div class="inline-err">❌ CTRX Mismatch: RDB=<strong>${cp.rdb_ctrx}</strong>, Calc=<strong>${cp.calc_ctrx}</strong></div>`;
+          if (cp.ctrw_x5_ok === false)
+            html += `<div class="inline-err">❌ CTRW×5=<strong>${cp.ctrw_x5}</strong> does not match E22=<strong>${cp.e22}</strong></div>`;
+          if (cp.ctrx_x5_ok === false)
+            html += `<div class="inline-err">❌ CTRX×5=<strong>${cp.ctrx_x5}</strong> does not match E23=<strong>${cp.e23}</strong></div>`;
+        } else {
+          html = `<p style="font-size:.76rem;color:var(--muted)">${esc(cp.message || 'Insufficient data')}</p>`;
+        }
+        gridEl.appendChild(makeCard(skip ? 'skip' : pass ? 'pass' : 'fail', '🔁 CTR / PTR Verification', html));
+      }
+
+      // 2. Port Settings
+      const pc = r.port_check;
+      if (pc !== undefined) {
+        const skip = pc.pass === null && !pc.files?.length, pass = pc.pass === true;
+        let html = '';
+        if (pc.ports_in_use)
+          html += `<div class="inline-info" style="margin-bottom:.6rem;margin-top:0">🔌 ${esc(pc.ports_in_use)}</div>`;
+        if (pc.files && pc.files.length > 0) {
+          html += `<table class="kv-2col">
+            <thead><tr><th>Port</th><th>EPORT</th><th>PROTO</th><th>TIMEOUT</th></tr></thead><tbody>`;
+          pc.files.forEach(f => {
+            const epHtml = `<span class="${f.eport === 'Y' ? 'val-ok' : 'val-neu'}">${esc(f.eport)}</span>`;
+            const prHtml = `<span class="val-neu mono">${esc(f.proto || '—')}</span>`;
+            let toHtml;
+            if (f.eport === 'Y' && (f.proto || '').toUpperCase() === 'SEL')
+              toHtml = f.pass
+                ? `<span class="val-ok">${esc(f.timeout || '—')}</span>`
+                : `<span class="val-bad">${esc(f.timeout || '(empty)')}</span>`;
+            else
+              toHtml = `<span class="val-neu mono">${esc(f.timeout || '—')}</span>`;
+            html += `<tr>
+              <td class="mono">${esc(f.port)}</td>
+              <td>${epHtml}</td><td>${prHtml}</td><td>${toHtml}</td>
+            </tr>`;
+          });
+          html += '</tbody></table>';
+          html += `<div class="port-badges">${pc.files.map(f =>
+            `<span class="port-badge ${f.pass ? 'pb-pass' : 'pb-fail'}">${esc(f.port)}</span>`).join('')}</div>`;
+        } else {
+          html += `<p style="font-size:.76rem;color:var(--muted)">${esc(pc.message || 'No ports found')}</p>`;
+        }
+        gridEl.appendChild(makeCard(skip ? 'skip' : pass ? 'pass' : 'fail', '🔌 Port Settings Check', html));
+      }
+
+      // 3. Conductor Rating
+      const cc = r.conductor_check;
+      if (cc !== undefined) {
+        const skip = cc.pass === null, pass = cc.pass === true;
+        let html = '';
+        if (!skip && (cc.fr_rating !== undefined || cc.calc_rating !== undefined)) {
+          html = `<table class="kv-2col">
+            <thead><tr><th>Source</th><th colspan="2">Rating (A)</th></tr></thead>
+            <tbody>
+              <tr><td>FR Workbook</td>
+                  <td colspan="2" class="${pass ? 'val-ok' : 'val-bad'} mono">${cc.fr_rating != null ? cc.fr_rating + ' A' : 'N/A'}</td></tr>
+              <tr><td>Calc Sheet</td>
+                  <td colspan="2" class="${pass ? 'val-ok' : 'val-bad'} mono">${cc.calc_rating != null ? cc.calc_rating + ' A' : 'N/A'}</td></tr>
+              <tr><td>Match?</td>
+                  <td colspan="2" class="${pass ? 'val-ok' : 'val-bad'}">${pass ? 'YES ✓' : 'NO ✗'}</td></tr>
+            </tbody></table>`;
+          if (!pass && cc.fr_rating != null && cc.calc_rating != null)
+            html += `<div class="inline-err">❌ FR WB=<strong>${cc.fr_rating} A</strong> does not match Calc=<strong>${cc.calc_rating} A</strong></div>`;
+        } else {
+          html = `<p style="font-size:.76rem;color:var(--muted)">${esc(cc.message || '')}</p>`;
+        }
+        gridEl.appendChild(makeCard(skip ? 'skip' : pass ? 'pass' : 'fail', '📋 FR WB vs Calc Conductor Rating Verification', html));
+      }
+
+      // 4. PRC Safe Load
+      const sl = r.safe_load_check;
+      if (sl !== undefined) {
+        const skip = sl.pass === null, pass = sl.pass === true;
+        let html = '';
+        if (!skip && sl.safe_load !== undefined) {
+          html = `<table class="kv-2col">
+            <thead><tr><th>Parameter</th><th colspan="2">Value</th></tr></thead>
+            <tbody>
+              <tr><td>Safe Load (SEL)</td>
+                  <td colspan="2" class="${pass ? 'val-ok' : 'val-bad'} mono">${sl.safe_load != null ? sl.safe_load + ' A' : 'N/A'}</td></tr>
+              <tr><td>Conductor Rating</td>
+                  <td colspan="2" class="${pass ? 'val-ok' : 'val-bad'} mono">${sl.conductor_rating != null ? sl.conductor_rating + ' A' : 'N/A'}</td></tr>
+            </tbody></table>`;
+          const prcInfo  = sl.prc_info  || {};
+          const loadLine = sl.load_line || '';
+          const primary  = prcInfo.primary || 'none';
+          const notApplicable = prcInfo.not_applicable || [];
+
+          let prcHtml = `<div class="prc-box ${pass ? 'prc-pass' : 'prc-fail'}">`;
+          prcHtml += `<span class="prc-line"><strong>${pass ? '✅' : '❌'} ${esc(loadLine)}</strong></span>`;
+
+          // Enabled PRC line
+          if (primary !== 'none' && primary !== 'other') {
+            const label = `PRC-${primary === '023' ? '023' : primary === '025' ? '025' : '026'}`;
+            prcHtml += `<span class="prc-line" style="margin-top:.3rem">✔ <strong>${esc(label)}</strong> is enabled and complied with</span>`;
+          }
+
+          // Not-applicable PRC lines
+          notApplicable.forEach(prc => {
+            prcHtml += `<span class="prc-line prc-na">• ${esc(prc)} — not flagged in calc sheet</span>`;
+          });
+
+          prcHtml += '</div>';
+          html += prcHtml;
+        } else {
+          html = `<p style="font-size:.76rem;color:var(--muted)">${esc(sl.message || '')}</p>`;
+        }
+        gridEl.appendChild(makeCard(skip ? 'skip' : pass ? 'pass' : 'fail', '⚡ PRC Safe Load Check', html));
+      }
+    }
+
+    // ── Build error table into any container ──────────────────────────────────
+    function buildErrorTableInto(data, errSecEl, errTitleEl, errBodyEl) {
+      if (!errSecEl) return;
+      if (data.errors && data.errors.length > 0) {
+        errSecEl.style.display = 'block';
+        if (errTitleEl) errTitleEl.textContent = `⚠️ ${data.errors.length} Issue(s) Found`;
+        if (errBodyEl) {
+          errBodyEl.innerHTML = data.errors.map((e, i) =>
+            `<tr>
+              <td class="err-num">${i + 1}</td>
+              <td class="err-cat">${getCategory(e)}</td>
+              <td>${esc(e)}</td>
+              <td><input type="text" class="approver-input" placeholder="Enter approver name" /></td>
+            </tr>`
+          ).join('');
+        }
+      } else {
+        errSecEl.style.display = 'none';
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // SINGLE RESULTS RENDER
+    // ═══════════════════════════════════════════════════════
+    function renderSingleResults(data) {
+      document.getElementById('results').style.display = 'block';
+      const banner = document.getElementById('summaryBanner');
+      if (data.success) {
+        banner.className = 'result-banner banner-pass';
+        banner.innerHTML = '✅ All checks passed — no compliance issues found.';
+      } else {
+        banner.className = 'result-banner banner-fail';
+        banner.innerHTML = `❌ ${(data.errors || []).length} issue(s) found — see details below.`;
+      }
+      buildChecksInto(data, document.getElementById('checksGrid'));
+      buildErrorTableInto(data,
+        document.getElementById('errorTableSection'),
+        document.getElementById('errTableTitle'),
+        document.getElementById('errorsBody'));
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // MULTI RESULTS RENDER
+    // ═══════════════════════════════════════════════════════
+    function renderMultiResults(data) {
+      document.getElementById('multiResults').style.display = 'block';
+      const { summary = {}, groups = [] } = data;
+      const { total_groups = 0, total_rdb = 0, passed = 0, failed = 0 } = summary;
+
+      // Summary bar
+      document.getElementById('multiSummaryBar').innerHTML = `
+        <div class="batch-stat bs-total"><span class="stat-num">${total_rdb}</span><span class="stat-lbl">Total Files</span></div>
+        <div class="batch-stat bs-pass"><span class="stat-num">${passed}</span><span class="stat-lbl">Passed</span></div>
+        <div class="batch-stat bs-fail"><span class="stat-num">${failed}</span><span class="stat-lbl">Failed</span></div>`;
+
+      // Banner
+      const banner = document.getElementById('multiResultBanner');
+      if (data.success) {
+        banner.className = 'result-banner banner-pass';
+        banner.innerHTML = `✅ All ${total_rdb} RDB file(s) across ${total_groups} group(s) passed.`;
+      } else {
+        banner.className = 'result-banner banner-fail';
+        banner.innerHTML = `❌ ${failed} of ${total_rdb} RDB file(s) have compliance issues across ${total_groups} group(s).`;
+      }
+
+      // Groups
+      const container = document.getElementById('multiGroupsContainer');
+      container.innerHTML = '';
+      groups.forEach((group, gIdx) => {
+        const { group_name, summary: gs = {}, results: gResults = [], warning } = group;
+        const gFail = gs.failed || 0, gPass = gs.passed || 0, gTotal = gs.total_rdb || 0;
+        const gOk   = gFail === 0 && !warning;
+
+        const groupEl = document.createElement('div');
+        groupEl.className = 'group-card';
+        groupEl.id = `mgroup-${gIdx}`;
+        groupEl.style.border = `1px solid ${gOk ? 'var(--ok-bdr)' : 'var(--err-bdr)'}`;
+
+        groupEl.innerHTML = `
+          <div class="group-header" style="background:${gOk ? 'var(--ok-bg)' : 'var(--err-bg)'};border-bottom:1px solid ${gOk ? 'var(--ok-bdr)' : 'var(--err-bdr)'}">
+            <span style="font-weight:700;font-size:.92rem;color:${gOk ? 'var(--success)' : 'var(--danger)'}">
+              ${gOk ? '✅' : '❌'} ${esc(group_name)}
+            </span>
+            <div class="group-badges">
+              <span class="gbadge gbadge-total">Total: ${gTotal}</span>
+              <span class="gbadge gbadge-pass">Pass: ${gPass}</span>
+              ${gFail > 0 ? `<span class="gbadge gbadge-fail">Fail: ${gFail}</span>` : ''}
+            </div>
+          </div>
+          ${warning ? `<div style="padding:.65rem 1.2rem;font-size:.8rem;color:var(--warning);background:var(--warn-bg)">⚠️ ${esc(warning)}</div>` : ''}
+          <div class="group-body" id="mgbody-${gIdx}"></div>`;
+        container.appendChild(groupEl);
+
+        if (!gResults.length) return;
+        const bodyEl = document.getElementById(`mgbody-${gIdx}`);
+
+        if (gResults.length === 1) {
+          _renderOneRDB(gResults[0], bodyEl, `mg${gIdx}r0`);
+        } else {
+          // Tab strip
+          const tabStrip  = document.createElement('div'); tabStrip.className = 'batch-tabs';
+          const panelsDiv = document.createElement('div');
+          gResults.forEach((r, rIdx) => {
+            const tab = document.createElement('button');
+            tab.className   = `batch-tab ${r.success ? 'tab-pass' : 'tab-fail'} ${rIdx === 0 ? 'active' : ''}`;
+            tab.id          = `mgtab-${gIdx}-${rIdx}`;
+            tab.title       = r.file_name;
+            tab.textContent = (r.success ? '✅ ' : '❌ ') + (r.port ? r.port + ' — ' : '') + r.file_name;
+            tab.onclick = () => {
+              gResults.forEach((_, k) => {
+                document.getElementById(`mgtab-${gIdx}-${k}`)?.classList.toggle('active', k === rIdx);
+                document.getElementById(`mgpanel-${gIdx}-${k}`)?.classList.toggle('active', k === rIdx);
+              });
+            };
+            tabStrip.appendChild(tab);
+
+            const panel = document.createElement('div');
+            panel.className = `batch-panel ${rIdx === 0 ? 'active' : ''}`;
+            panel.id        = `mgpanel-${gIdx}-${rIdx}`;
+            panelsDiv.appendChild(panel);
+          });
+          bodyEl.appendChild(tabStrip);
+          bodyEl.appendChild(panelsDiv);
+          gResults.forEach((r, rIdx) =>
+            _renderOneRDB(r, document.getElementById(`mgpanel-${gIdx}-${rIdx}`), `mg${gIdx}r${rIdx}`));
+        }
+      });
+    }
+
+    function _renderOneRDB(rdbData, containerEl, uid) {
+      const grid   = document.createElement('div'); grid.className = 'checks-grid'; grid.id = uid + '-grid';
+      const errSec = document.createElement('div'); errSec.id = uid + '-errsec'; errSec.style.display = 'none';
+      errSec.innerHTML = `
+        <div class="error-section">
+          <div class="error-section-head"><h3 id="${uid}-errtitle">⚠️ Issues Found</h3></div>
+          <table class="errors-table">
+            <thead><tr><th>#</th><th>Check Category</th><th>Issue Description</th><th>Approver</th></tr></thead>
+            <tbody id="${uid}-errbody"></tbody>
+          </table>
+        </div>`;
+      containerEl.appendChild(grid);
+      containerEl.appendChild(errSec);
+      buildChecksInto(rdbData, grid);
+      buildErrorTableInto(rdbData,
+        document.getElementById(uid + '-errsec'),
+        document.getElementById(uid + '-errtitle'),
+        document.getElementById(uid + '-errbody'));
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // PDF — Single
+    // ═══════════════════════════════════════════════════════
+    async function downloadSinglePDF() {
+      const el = document.getElementById('results');
+      if (!el || el.style.display === 'none') { showToast('Run checks first.'); return; }
+      const btn = document.getElementById('pdfBtnSingle');
+      btn.classList.add('loading'); btn.textContent = '⏳ Generating…';
+      try { await _renderElementToPDF(el, 'compliance_report.pdf'); }
+      finally { btn.classList.remove('loading'); btn.textContent = '⬇ Download PDF'; }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // PDF — Multi All (one per group)
+    // ═══════════════════════════════════════════════════════
+    async function downloadMultiPDFAll() {
+      if (!lastData?.groups?.length) { showToast('No results to export.'); return; }
+      const btn = document.getElementById('pdfBtnMultiAll');
+      btn.classList.add('loading');
+      const groupEls = document.querySelectorAll('#multiGroupsContainer > div');
+      try {
+        for (let i = 0; i < groupEls.length; i++) {
+          btn.textContent = `⏳ ${i+1}/${groupEls.length}…`;
+          const fname = (lastData.groups[i].group_name || `group_${i+1}`).replace(/[^a-zA-Z0-9._-]/g,'_') + '_report.pdf';
+          await _renderElementToPDF(groupEls[i], fname);
+          await new Promise(r => setTimeout(r, 300));
+        }
+      } finally { btn.classList.remove('loading'); btn.textContent = '⬇ All PDFs'; }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // PDF — Multi Combined
+    // ═══════════════════════════════════════════════════════
+    async function downloadMultiPDFCombined() {
+      if (!lastData?.groups?.length) { showToast('No results to export.'); return; }
+      const btn = document.getElementById('pdfBtnMultiCombined');
+      btn.classList.add('loading'); btn.textContent = '⏳ Building…';
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf    = new jsPDF('p', 'mm', 'a4');
+        const pageW  = pdf.internal.pageSize.getWidth();
+        const pageH  = pdf.internal.pageSize.getHeight();
+        const margin = 8, printW = pageW - margin * 2, printH = pageH - margin * 2;
+        let isFirstPage = true;
+        const { summary = {}, groups = [] } = lastData;
+
+        // Cover page
+        const cover = document.createElement('div');
+        cover.style.cssText = 'background:#fff;padding:40px;font-family:Arial,sans-serif;width:700px';
+        cover.innerHTML = `
+          <h1 style="color:#003580;font-size:1.8rem;margin-bottom:1rem">⚡ Relay Compliance Report</h1>
+          <p style="color:#5f6368;font-size:.9rem;margin-bottom:1.5rem">Generated: ${new Date().toLocaleString()}</p>
+          <table style="width:100%;border-collapse:collapse;font-size:.9rem">
+            <tr style="background:#f1f3f4"><td style="padding:.5rem;font-weight:700">Total Groups</td><td>${summary.total_groups||0}</td></tr>
+            <tr><td style="padding:.5rem;font-weight:700">Total RDB Files</td><td>${summary.total_rdb||0}</td></tr>
+            <tr style="background:#e6f4ea"><td style="padding:.5rem;font-weight:700;color:#146c2e">Passed</td><td style="color:#146c2e;font-weight:700">${summary.passed||0}</td></tr>
+            <tr style="background:#fce8e6"><td style="padding:.5rem;font-weight:700;color:#b91c1c">Failed</td><td style="color:#b91c1c;font-weight:700">${summary.failed||0}</td></tr>
+          </table>`;
+        document.body.appendChild(cover);
+        const coverC = await html2canvas(cover, { scale:2, backgroundColor:'#fff', logging:false });
+        document.body.removeChild(cover);
+        pdf.addImage(coverC.toDataURL('image/png'), 'PNG', margin, margin, printW, Math.min((coverC.height/coverC.width)*printW, printH));
+        isFirstPage = false;
+
+        for (const group of groups) {
+          for (const r of (group.results || [])) {
+            btn.textContent = `⏳ ${r.file_name.slice(0,20)}…`;
+            const wrap = document.createElement('div');
+            wrap.style.cssText = 'background:#fff;padding:20px;font-family:Arial,sans-serif;width:760px';
+            wrap.innerHTML = `
+              <div style="border-bottom:2px solid #003580;padding-bottom:.5rem;margin-bottom:.8rem">
+                <h2 style="color:#003580;font-size:1.1rem;margin:0">${esc(group.group_name)}</h2>
+                <p style="color:#5f6368;font-size:.78rem;margin:.2rem 0 0">${esc(r.file_name)}${r.port ? ' — ' + r.port : ''}</p>
+              </div>`;
+            const tmpGrid = document.createElement('div');
+            tmpGrid.className = 'checks-grid';
+            tmpGrid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem';
+            wrap.appendChild(tmpGrid);
+            document.body.appendChild(wrap);
+            buildChecksInto(r, tmpGrid);
+            const canvas = await html2canvas(wrap, { scale:2, backgroundColor:'#fff', logging:false });
+            document.body.removeChild(wrap);
+            const ratio = printW / (canvas.width / (96/25.4));
+            const totalH_mm = (canvas.height / (96/25.4)) * ratio;
+            let yOff = 0, firstSlice = true;
+            while (yOff < totalH_mm) {
+              if (!isFirstPage || !firstSlice) pdf.addPage();
+              isFirstPage = false; firstSlice = false;
+              const slH  = Math.round((printH / ratio) * (96/25.4));
+              const srcY = Math.round((yOff   / ratio) * (96/25.4));
+              const sl   = document.createElement('canvas');
+              sl.width   = canvas.width;
+              sl.height  = Math.min(slH, canvas.height - srcY);
+              sl.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, sl.height, 0, 0, canvas.width, sl.height);
+              pdf.addImage(sl.toDataURL('image/png'), 'PNG', margin, margin, printW, sl.height / (96/25.4) * ratio);
+              yOff += printH;
+            }
+          }
+        }
+        pdf.save('Relay_Compliance_Report_Combined.pdf');
+      } finally { btn.classList.remove('loading'); btn.textContent = '⬇ Combined PDF'; }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // _renderElementToPDF — A4 paginated core
+    // ═══════════════════════════════════════════════════════
+    async function _renderElementToPDF(element, filename) {
+      const { jsPDF } = window.jspdf;
+      const canvas = await html2canvas(element, {
+        scale: 2, useCORS: true, allowTaint: false,
+        backgroundColor: '#ffffff', logging: false,
+        windowWidth:  document.documentElement.clientWidth,
+        windowHeight: document.documentElement.scrollHeight,
+      });
+      const pdf    = new jsPDF('p', 'mm', 'a4');
+      const pageW  = pdf.internal.pageSize.getWidth();
+      const pageH  = pdf.internal.pageSize.getHeight();
+      const margin = 8, printW = pageW - margin * 2, printH = pageH - margin * 2;
+      const ratio      = printW / (canvas.width / (96/25.4));
+      const totalH_mm  = (canvas.height / (96/25.4)) * ratio;
+      let yOffset = 0, isFirst = true;
+      while (yOffset < totalH_mm) {
+        if (!isFirst) pdf.addPage();
+        isFirst = false;
+        const sliceH = Math.round((printH / ratio) * (96/25.4));
+        const srcY   = Math.round((yOffset / ratio) * (96/25.4));
+        const slice  = document.createElement('canvas');
+        slice.width  = canvas.width;
+        slice.height = Math.min(sliceH, canvas.height - srcY);
+        slice.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, slice.height, 0, 0, canvas.width, slice.height);
+        pdf.addImage(slice.toDataURL('image/png'), 'PNG', margin, margin, printW, slice.height / (96/25.4) * ratio);
+        yOffset += printH;
+      }
+      pdf.save(filename);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ELECTRON DESKTOP INTEGRATION
+    // Runs only when inside the Electron shell (window.electronAPI exists)
+    // ═══════════════════════════════════════════════════════
+    if (window.electronAPI) {
+      // Handle File > New Check menu action
+      window.electronAPI.onMenuReset(() => resetAll());
+
+      // Show update-available banner
+      window.electronAPI.onUpdateAvailable(info => {
+        showUpdateBanner(`Update available: v${info.version} — downloading in background…`, false);
+      });
+
+      // Show update-ready banner with restart button
+      window.electronAPI.onUpdateDownloaded(info => {
+        showUpdateBanner(`v${info.version} ready — click Restart to apply update.`, true);
+      });
+    }
+
+    function showUpdateBanner(msg, showRestart) {
+      let banner = document.getElementById('update-banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'update-banner';
+        banner.style.cssText = `
+          position:fixed; bottom:1rem; right:1rem; z-index:9999;
+          background:#003580; color:#fff; border-radius:10px;
+          padding:.75rem 1.2rem; font-size:.8rem; font-family:'Sora',sans-serif;
+          box-shadow:0 8px 32px rgba(0,0,0,.25); display:flex;
+          align-items:center; gap:.8rem; max-width:380px; animation:slideUp .3s ease;
+        `;
+        document.head.insertAdjacentHTML('beforeend',
+          '<style>@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}</style>');
+        document.body.appendChild(banner);
+      }
+      banner.innerHTML = `<span>🔄 ${msg}</span>` +
+        (showRestart
+          ? `<button onclick="window.electronAPI.restartAndInstall()"
+               style="background:#34a853;color:#fff;border:none;border-radius:6px;
+                      padding:.3rem .8rem;font-family:'Sora',sans-serif;font-size:.76rem;
+                      font-weight:600;cursor:pointer;white-space:nowrap;">Restart</button>`
+          : '') +
+        `<span onclick="this.parentElement.remove()" style="cursor:pointer;opacity:.7;font-size:1rem;flex-shrink:0">✕</span>`;
+    }
+  </script>
+</body>
+</html>
