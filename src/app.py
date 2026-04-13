@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ─── VERSION (bump this on every release) ───────────────────────────────────
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.3.0"
 
 ALL_PRC = ["PRC-023", "PRC-025", "PRC-026"]
 
