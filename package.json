@@ -1,6 +1,6 @@
 {
-  "name": "phasorgrid",
-  "version": "1.3.0",
+  "name": "pgri",
+  "version": "1.1.9",
   "description": "PGRI-PhasorGrid Relay Intelligence",
   "main": "main.js",
   "author": {
@@ -71,7 +71,7 @@
       "installerHeaderIcon":  "assets/icon.ico",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName":         "PhasorGrid",
+      "shortcutName":         "PGRI",
        "installerSidebar":     "assets/installer-sidebar.bmp",
       "installerHeader":      "assets/installer-header.bmp",
       "include":              "assets/installer.nsh"

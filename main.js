@@ -2042,11 +2042,11 @@ v3UdoUIrAR94FDVfidXph2FV2dloiGikzmrQLZbAzANmfLEHsGowDrlq3cQikE5g
 AElFTkSuQmCC
 
 ">
-    <div class="logo-name">PGRI-PhasorGrid Relay Intelligence</div>
-    <div class="logo-sub">Relay Intelligence Platform</div>
+    <div class="logo-name">PGRI</div>
+    
   </div>
   <div class="progress-track"><div class="progress-bar"></div></div>
-  <div class="status">Starting backend<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
+  <div class="status">Starting Your PGRI<span class="dots"><span>.</span><span>.</span><span>.</span></span></div>
 </body></html>`;
 }
 
