@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET","POST","OPTIONS"], "allow_headers": ["Content-Type"]}})
 
 # ─── VERSION (bump this on every release) ───────────────────────────────────
-APP_VERSION = "1.1.10"
+APP_VERSION = "1.1.11"
 
 ALL_PRC = ["PRC-023", "PRC-025", "PRC-026"]
 
