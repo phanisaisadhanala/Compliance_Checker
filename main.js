@@ -60,10 +60,12 @@ function startFlask() {
   flaskProc = spawn(python, [script], {
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true,
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1' },
   });
   flaskProc.stdout.on('data', d => log.info('[Flask]', d.toString().trim()));
   flaskProc.stderr.on('data', d => log.warn('[Flask]', d.toString().trim()));
   flaskProc.on('close', code => log.info('Flask exited with code', code));
+  flaskProc.on('error', err => log.error('Flask spawn error:', err));
 }
 
 // ── Wait for Flask to become ready ───────────────────────────────────────────

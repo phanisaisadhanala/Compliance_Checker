@@ -1,6 +1,6 @@
 {
   "name": "pgri",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "description": "PGRI-PhasorGrid Relay Intelligence",
   "main": "main.js",
   "author": {
